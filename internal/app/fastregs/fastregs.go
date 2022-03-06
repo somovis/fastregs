@@ -6,12 +6,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"github.com/somovis/fastregs/internal/app/store"
 )
 
 type Fastregs struct {
 	config *Config
 	logger *logrus.Logger
 	router *mux.Router
+	store  *store.Store
 }
 
 func New(config *Config) *Fastregs {
@@ -31,6 +33,10 @@ func (s *Fastregs) Start() error {
 
 	s.configureRouter()
 
+	if err := s.configureStore(); err != nil {
+		return err
+	}
+
 	return http.ListenAndServe(s.config.BindAddr, s.router)
 }
 
@@ -48,6 +54,17 @@ func (s *Fastregs) configureLogger() error {
 
 func (s *Fastregs) configureRouter() {
 	s.router.HandleFunc("/hello", s.handleHello())
+}
+
+func (s *Fastregs) configureStore() error {
+	st := store.New(s.config.Store)
+	if err := st.Open(); err != nil {
+		return err
+	}
+
+	s.store = st
+
+	return nil
 }
 
 func (s *Fastregs) handleHello() http.HandlerFunc {

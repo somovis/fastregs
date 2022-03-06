@@ -1,6 +1,14 @@
-burnt sushi
-github.com/BurntSushi
+go packages:
+
+go get github.com/BurntSushi
 go get github.com/sirupsen/logrus
 go get -u github.com/gorilla/mux
 go get github.com/stretchr/testify
 go get github.com/lib/pq
+go get github.com/golang-migrate/migrate
+
+
+migrations:
+migrate -path migrations -database "postgres://localhost/fastregs" up
+
+migrate create -ext sql -dir migrations create_registers
