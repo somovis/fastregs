@@ -1,74 +1,36 @@
 package fastregs
 
 import (
-	"io"
+	"database/sql"
 	"net/http"
 
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-	"github.com/somovis/fastregs/internal/app/store"
+	"github.com/somovis/fastregs/internal/app/store/sqlstore"
 )
 
-type Fastregs struct {
-	config *Config
-	logger *logrus.Logger
-	router *mux.Router
-	store  *store.Store
-}
-
-func New(config *Config) *Fastregs {
-	return &Fastregs{
-		config: config,
-		logger: logrus.New(),
-		router: mux.NewRouter(),
-	}
-}
-
-func (s *Fastregs) Start() error {
-	s.logger.Info("starting fast registers server")
-
-	if err := s.configureLogger(); err != nil {
-		return err
-	}
-
-	s.configureRouter()
-
-	if err := s.configureStore(); err != nil {
-		return err
-	}
-
-	return http.ListenAndServe(s.config.BindAddr, s.router)
-}
-
-func (s *Fastregs) configureLogger() error {
-	level, err := logrus.ParseLevel(s.config.LogLevel)
-
+func Start(config *Config) error {
+	db, err := newDB(config.databaseURL)
 	if err != nil {
 		return err
 	}
 
-	s.logger.SetLevel(level)
+	defer db.Close()
 
-	return nil
+	store := sqlstore.New(db)
+	srv := newServer(store)
+
+	return http.ListenAndServe(config.BindAddr, srv)
 }
 
-func (s *Fastregs) configureRouter() {
-	s.router.HandleFunc("/hello", s.handleHello())
-}
+func newDB(databaseURL string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", databaseURL)
 
-func (s *Fastregs) configureStore() error {
-	st := store.New(s.config.Store)
-	if err := st.Open(); err != nil {
-		return err
+	if err != nil {
+		return nil, err
 	}
 
-	s.store = st
-
-	return nil
-}
-
-func (s *Fastregs) handleHello() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello")
+	if err := db.Ping(); err != nil {
+		return nil, err
 	}
+
+	return db, nil
 }

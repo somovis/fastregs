@@ -6,7 +6,8 @@ go get -u github.com/gorilla/mux
 go get github.com/stretchr/testify
 go get github.com/lib/pq
 go get github.com/golang-migrate/migrate
-
+go get github.com/go-ozzo/ozzo-validation
+go get github.com/go-ozzo/ozzo-validation/is
 
 migrations:
 migrate -path migrations -database "postgres://localhost/fastregs" up

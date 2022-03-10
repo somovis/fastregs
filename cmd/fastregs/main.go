@@ -25,9 +25,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := fastregs.New(config)
-
-	if err := s.Start(); err != nil {
+	if err := fastregs.Start(config); err != nil {
 		log.Fatal(err)
 	}
 }
